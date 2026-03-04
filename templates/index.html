@@ -1,469 +1,508 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SubsOnVid — AI Subtitle Generator</title>
   <meta name="description" content="Add subtitles to any video locally. Powered by Whisper AI and FFmpeg.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css">
 </head>
+
 <body>
 
-<header>
-  <div class="logo">
-    <span class="logo-icon">🎬</span>
-    <span class="logo-text">SubsOnVid</span>
-  </div>
-  <p class="logo-tagline">AI-powered local subtitle generator • Free • No cloud needed</p>
-</header>
+  <header>
+    <div class="logo">
+      <span class="logo-icon">🎬</span>
+      <span class="logo-text">SubsOnVid</span>
+    </div>
+    <p class="logo-tagline">AI-powered local subtitle generator • Free • No cloud needed</p>
+  </header>
 
-<main>
-  <!-- Step indicator -->
-  <div class="steps-bar">
-    <div class="step active" id="step-ind-1"><span>1</span>Upload</div>
-    <div class="step-line"></div>
-    <div class="step" id="step-ind-2"><span>2</span>Edit</div>
-    <div class="step-line"></div>
-    <div class="step" id="step-ind-3"><span>3</span>Style</div>
-    <div class="step-line"></div>
-    <div class="step" id="step-ind-4"><span>4</span>Burn</div>
-  </div>
-
-  <!-- ── STEP 1 : Upload ──────────────────────────────────────────────────── -->
-  <section class="card" id="section-upload">
-    <h2>Upload Your Video</h2>
-    <p class="hint">Drag & drop a video or click Browse. Whisper will transcribe the audio automatically.</p>
-
-    <div class="drop-zone" id="dropZone">
-      <div class="drop-icon">🎥</div>
-      <div class="drop-text" id="dropText">Drop video here</div>
-      <div class="drop-sub">MP4, MOV, MKV, AVI, WEBM supported</div>
-      <input type="file" id="videoInput" accept="video/*" hidden>
-      <button class="btn-secondary" onclick="document.getElementById('videoInput').click()">Browse Files</button>
+  <main>
+    <!-- Step indicator -->
+    <div class="steps-bar">
+      <div class="step active" id="step-ind-1"><span>1</span>Upload</div>
+      <div class="step-line"></div>
+      <div class="step" id="step-ind-2"><span>2</span>Edit</div>
+      <div class="step-line"></div>
+      <div class="step" id="step-ind-3"><span>3</span>Style</div>
+      <div class="step-line"></div>
+      <div class="step" id="step-ind-4"><span>4</span>Burn</div>
     </div>
 
-    <div class="option-row">
-      <label for="modelSelect">Whisper Model</label>
-      <select id="modelSelect">
-        <option value="turbo">Turbo  (Recommended — Fast &amp; Accurate)</option>
-        <option value="small">Small  (Fastest, lower accuracy)</option>
-        <option value="medium">Medium (Balanced)</option>
-        <option value="large-v3">Large v3  (Best accuracy, slow)</option>
-      </select>
-    </div>
+    <!-- ── STEP 1 : Upload ──────────────────────────────────────────────────── -->
+    <section class="card" id="section-upload">
+      <h2>Upload Your Video</h2>
+      <p class="hint">Drag & drop a video or click Browse. Whisper will transcribe the audio automatically.</p>
 
-    <div class="preview-wrap hidden" id="videoPreview">
-      <video id="previewVideo" controls></video>
-    </div>
-
-    <div class="progress-wrap hidden" id="uploadProgress">
-      <div class="progress-label" id="progressLabel">Transcribing audio…</div>
-      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-    </div>
-
-    <button class="btn-primary" id="transcribeBtn" disabled>
-      ✨ Transcribe Audio
-    </button>
-  </section>
-
-  <!-- ── STEP 2 : Edit subtitles ─────────────────────────────────────────── -->
-  <section class="card hidden" id="section-edit">
-    <div class="section-header">
-      <h2>Edit Subtitles</h2>
-      <div class="toggle-wrap">
-        <span class="toggle-label">Word-by-Word</span>
-        <div class="toggle" id="wbwToggle" onclick="toggleWBW()"><div class="toggle-knob"></div></div>
-        <span class="badge hidden" id="wbwBadge">ON</span>
-      </div>
-    </div>
-    <p class="hint" id="wbwHint">
-      Click any cell to edit. Toggle <strong>Word-by-Word</strong> for the one-word-at-a-time reel effect.
-    </p>
-
-    <div class="cues-table-wrap">
-      <table class="cues-table">
-        <thead>
-          <tr><th>#</th><th>Start</th><th>End</th><th>Text</th><th></th></tr>
-        </thead>
-        <tbody id="cuesBody"></tbody>
-      </table>
-    </div>
-
-    <button class="btn-ghost" onclick="addCue()">+ Add Cue</button>
-    <button class="btn-primary" onclick="gotoStyle()">Next: Style →</button>
-  </section>
-
-  <!-- ── STEP 3 : Style ──────────────────────────────────────────────────── -->
-  <section class="card hidden" id="section-style">
-    <h2>Subtitle Style</h2>
-    <p class="hint">Customise font, colour, size, and position. <strong>Applies in Hardcoded mode only.</strong></p>
-
-    <div class="style-grid">
-      <div class="style-group">
-        <label>Font Family</label>
-        <select id="fontSelect" onchange="updatePreview()"></select>
+      <div class="drop-zone" id="dropZone">
+        <div class="drop-icon">🎥</div>
+        <div class="drop-text" id="dropText">Drop video here</div>
+        <div class="drop-sub">MP4, MOV, MKV, AVI, WEBM supported</div>
+        <input type="file" id="videoInput" accept="video/*" hidden>
+        <button class="btn-secondary" onclick="document.getElementById('videoInput').click()">Browse Files</button>
       </div>
 
-      <div class="style-group">
-        <label>Font Size — <span id="fontSizeVal">36</span>px</label>
-        <input type="range" id="fontSizeSlider" min="16" max="80" value="36" oninput="onFontSize()">
+      <div class="option-row">
+        <label for="modelSelect">Whisper Model</label>
+        <select id="modelSelect">
+          <option value="turbo">Turbo (Recommended — Fast &amp; Accurate)</option>
+          <option value="small">Small (Fastest, lower accuracy)</option>
+          <option value="medium">Medium (Balanced)</option>
+          <option value="large-v3">Large v3 (Best accuracy, slow)</option>
+        </select>
       </div>
 
-      <div class="style-group">
-        <label>Font Color</label>
-        <input type="color" id="fontColor" value="#ffffff" oninput="updatePreview()">
+      <div class="option-row">
+        <label for="scriptSelect">Output Script</label>
+        <select id="scriptSelect">
+          <option value="original">Original (keep as transcribed)</option>
+          <option value="roman">Roman / English script (Hindi → romanized)</option>
+        </select>
       </div>
 
-      <div class="style-group">
-        <label>Outline Color</label>
-        <input type="color" id="outlineColor" value="#000000" oninput="updatePreview()">
+      <div class="preview-wrap hidden" id="videoPreview">
+        <video id="previewVideo" controls></video>
       </div>
 
-      <div class="style-group">
-        <label>Outline Size — <span id="outlineSizeVal">2</span></label>
-        <input type="range" id="outlineSizeSlider" min="0" max="8" value="2" step="0.5" oninput="onOutlineSize()">
-      </div>
-
-      <div class="style-group">
-        <label>Bold / Italic</label>
-        <div class="format-btns">
-          <button class="fmt-btn" id="boldBtn" onclick="toggleBold()"><b>B</b></button>
-          <button class="fmt-btn" id="italicBtn" onclick="toggleItalic()"><i>I</i></button>
+      <div class="progress-wrap hidden" id="uploadProgress">
+        <div class="progress-label" id="progressLabel">Transcribing audio…</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
         </div>
       </div>
 
-      <div class="style-group" style="grid-column:1/-1">
-        <label>Subtitle Position</label>
-        <div class="position-btns">
-          <button class="pos-btn" data-pos="top"    onclick="setPosition('top')">▲ Top</button>
-          <button class="pos-btn active" data-pos="bottom" onclick="setPosition('bottom')">▼ Bottom</button>
-          <button class="pos-btn" data-pos="middle" onclick="setPosition('middle')">● Middle</button>
+      <button class="btn-primary" id="transcribeBtn" disabled>
+        ✨ Transcribe Audio
+      </button>
+    </section>
+
+    <!-- ── STEP 2 : Edit subtitles ─────────────────────────────────────────── -->
+    <section class="card hidden" id="section-edit">
+      <div class="section-header">
+        <h2>Edit Subtitles</h2>
+        <div class="toggle-wrap">
+          <span class="toggle-label">Words/screen</span>
+          <div class="wps-selector">
+            <button class="wps-btn active" data-n="0" onclick="setWPS(0)">Off</button>
+            <button class="wps-btn" data-n="1" onclick="setWPS(1)">1</button>
+            <button class="wps-btn" data-n="2" onclick="setWPS(2)">2</button>
+            <button class="wps-btn" data-n="3" onclick="setWPS(3)">3</button>
+            <input type="number" id="wpsCustom" class="wps-custom" min="1" max="20" placeholder="N"
+              oninput="setWPS(parseInt(this.value)||0)">
+          </div>
         </div>
       </div>
-    </div>
+      <p class="hint" id="wpsHint">
+        Click any cell to edit. Use <strong>Words/screen</strong> to show N words at a time in the output.
+      </p>
 
-    <!-- Live preview -->
-    <div class="preview-container">
-      <div class="preview-label">Live Preview</div>
-      <div class="preview-screen" id="previewScreen">
-        <div class="preview-text" id="previewText">Sample Subtitle 🎬</div>
+      <div class="cues-table-wrap">
+        <table class="cues-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Text</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="cuesBody"></tbody>
+        </table>
       </div>
-    </div>
 
-    <button class="btn-primary" onclick="gotoBurn()">Next: Burn →</button>
-  </section>
+      <button class="btn-ghost" onclick="addCue()">+ Add Cue</button>
+      <button class="btn-primary" onclick="gotoStyle()">Next: Style →</button>
+    </section>
 
-  <!-- ── STEP 4 : Burn ────────────────────────────────────────────────────── -->
-  <section class="card hidden" id="section-burn">
-    <h2>Burn Subtitles into Video</h2>
+    <!-- ── STEP 3 : Style ──────────────────────────────────────────────────── -->
+    <section class="card hidden" id="section-style">
+      <h2>Subtitle Style</h2>
+      <p class="hint">Customise font, colour, size, and position. <strong>Applies in Hardcoded mode only.</strong></p>
 
-    <div class="mode-selector">
-      <div class="mode-card active" id="mode-hardcoded" onclick="selectMode('hardcoded')">
-        <div class="mode-icon">🔥</div>
-        <div class="mode-title">Hardcoded</div>
-        <div class="mode-desc">Subtitles burned into the pixels. Permanent. Works in every player. Your custom styling is fully applied.</div>
+      <div class="style-grid">
+        <div class="style-group">
+          <label>Font Family</label>
+          <select id="fontSelect" onchange="updatePreview()"></select>
+        </div>
+
+        <div class="style-group">
+          <label>Font Size — <span id="fontSizeVal">36</span>px</label>
+          <input type="range" id="fontSizeSlider" min="16" max="80" value="36" oninput="onFontSize()">
+        </div>
+
+        <div class="style-group">
+          <label>Font Color</label>
+          <input type="color" id="fontColor" value="#ffffff" oninput="updatePreview()">
+        </div>
+
+        <div class="style-group">
+          <label>Outline Color</label>
+          <input type="color" id="outlineColor" value="#000000" oninput="updatePreview()">
+        </div>
+
+        <div class="style-group">
+          <label>Outline Size — <span id="outlineSizeVal">2</span></label>
+          <input type="range" id="outlineSizeSlider" min="0" max="8" value="2" step="0.5" oninput="onOutlineSize()">
+        </div>
+
+        <div class="style-group">
+          <label>Bold / Italic</label>
+          <div class="format-btns">
+            <button class="fmt-btn" id="boldBtn" onclick="toggleBold()"><b>B</b></button>
+            <button class="fmt-btn" id="italicBtn" onclick="toggleItalic()"><i>I</i></button>
+          </div>
+        </div>
+
+        <div class="style-group" style="grid-column:1/-1">
+          <label>Subtitle Position</label>
+          <div class="position-btns">
+            <button class="pos-btn" data-pos="top" onclick="setPosition('top')">▲ Top</button>
+            <button class="pos-btn active" data-pos="bottom" onclick="setPosition('bottom')">▼ Bottom</button>
+            <button class="pos-btn" data-pos="middle" onclick="setPosition('middle')">● Middle</button>
+          </div>
+        </div>
       </div>
-      <div class="mode-card" id="mode-softcoded" onclick="selectMode('softcoded')">
-        <div class="mode-icon">📎</div>
-        <div class="mode-title">Softcoded</div>
-        <div class="mode-desc">Subtitle track embedded inside the file. Can be toggled on/off in VLC. Player controls appearance.</div>
+
+      <!-- Live preview -->
+      <div class="preview-container">
+        <div class="preview-label">Live Preview</div>
+        <div class="preview-screen" id="previewScreen">
+          <div class="preview-text" id="previewText">Sample Subtitle 🎬</div>
+        </div>
       </div>
-    </div>
 
-    <div class="softcode-note hidden" id="softcodeNote">
-      ⚠️ Softcoded mode: subtitle styling will be controlled by your media player, not by SubsOnVid.
-    </div>
+      <button class="btn-primary" onclick="gotoBurn()">Next: Burn →</button>
+    </section>
 
-    <div class="burn-progress hidden" id="burnProgress">
-      <div class="burn-spinner">⚙️</div>
-      <div class="burn-label">FFmpeg is burning subtitles… this may take a moment.</div>
-      <div class="progress-bar" style="width:80%;margin:0 auto">
-        <div class="progress-fill animated" id="burnFill"></div>
+    <!-- ── STEP 4 : Burn ────────────────────────────────────────────────────── -->
+    <section class="card hidden" id="section-burn">
+      <h2>Burn Subtitles into Video</h2>
+
+      <div class="mode-selector">
+        <div class="mode-card active" id="mode-hardcoded" onclick="selectMode('hardcoded')">
+          <div class="mode-icon">🔥</div>
+          <div class="mode-title">Hardcoded</div>
+          <div class="mode-desc">Subtitles burned into the pixels. Permanent. Works in every player. Your custom styling
+            is fully applied.</div>
+        </div>
+        <div class="mode-card" id="mode-softcoded" onclick="selectMode('softcoded')">
+          <div class="mode-icon">📎</div>
+          <div class="mode-title">Softcoded</div>
+          <div class="mode-desc">Subtitle track embedded inside the file. Can be toggled on/off in VLC. Player controls
+            appearance.</div>
+        </div>
       </div>
-    </div>
 
-    <button class="btn-primary" id="burnBtn" onclick="burnVideo()">🔥 Burn &amp; Process</button>
-    <button class="btn-ghost" onclick="gotoSection('style')">← Back to Style</button>
-  </section>
+      <div class="softcode-note hidden" id="softcodeNote">
+        ⚠️ Softcoded mode: subtitle styling will be controlled by your media player, not by SubsOnVid.
+      </div>
 
-  <!-- ── STEP 5 : Download ───────────────────────────────────────────────── -->
-  <section class="card hidden" id="section-download">
-    <div class="success-icon">✅</div>
-    <h2 style="text-align:center">Your Video is Ready!</h2>
-    <p class="hint" style="text-align:center">Subtitles successfully embedded. Click below to download.</p>
-    <a class="download-link" id="downloadLink" href="#" download>⬇️ Download Video</a>
-    <button class="btn-ghost" onclick="resetApp()">↩ Process Another Video</button>
-  </section>
-</main>
+      <div class="burn-progress hidden" id="burnProgress">
+        <div class="burn-spinner">⚙️</div>
+        <div class="burn-label">FFmpeg is burning subtitles… this may take a moment.</div>
+        <div class="progress-bar" style="width:80%;margin:0 auto">
+          <div class="progress-fill animated" id="burnFill"></div>
+        </div>
+      </div>
 
-<script>
-// ── State ────────────────────────────────────────────────────────────────────
-const FONTS = {{ fonts | tojson }};
+      <button class="btn-primary" id="burnBtn" onclick="burnVideo()">🔥 Burn &amp; Process</button>
+      <button class="btn-ghost" onclick="gotoSection('style')">← Back to Style</button>
+    </section>
 
-const state = {
-  filename : null,
-  cues     : [],
-  wordByWord : false,
-  mode     : 'hardcoded',
-  style    : {
-    fontName    : 'Arial',
-    fontSize    : 36,
-    fontColor   : '#ffffff',
-    outlineColor: '#000000',
-    outlineSize : 2,
-    bold        : false,
-    italic      : false,
-    position    : 'bottom'
-  }
-};
+    <!-- ── STEP 5 : Download ───────────────────────────────────────────────── -->
+    <section class="card hidden" id="section-download">
+      <div class="success-icon">✅</div>
+      <h2 style="text-align:center">Your Video is Ready!</h2>
+      <p class="hint" style="text-align:center">Subtitles successfully embedded. Click below to download.</p>
+      <a class="download-link" id="downloadLink" href="#" download>⬇️ Download Video</a>
+      <button class="btn-ghost" onclick="resetApp()">↩ Process Another Video</button>
+    </section>
+  </main>
 
-// ── Populate font dropdown ────────────────────────────────────────────────────
-const fontSelect = document.getElementById('fontSelect');
-FONTS.forEach(f => fontSelect.add(new Option(f.label, f.value)));
+  <script>
+    // ── State ────────────────────────────────────────────────────────────────────
+    const FONTS = {{ fonts | tojson }};
 
-// ── Upload / drag-drop ────────────────────────────────────────────────────────
-const dropZone   = document.getElementById('dropZone');
-const videoInput = document.getElementById('videoInput');
+    const state = {
+      filename: null,
+      cues: [],
+      wordsPerScreen: 0,      // 0 = disabled
+      script: 'original',
+      mode: 'hardcoded',
+      style: {
+        fontName: 'Arial',
+        fontSize: 36,
+        fontColor: '#ffffff',
+        outlineColor: '#000000',
+        outlineSize: 2,
+        bold: false,
+        italic: false,
+        position: 'bottom'
+      }
+    };
 
-dropZone.addEventListener('click', () => videoInput.click());
-dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-dropZone.addEventListener('drop', e => {
-  e.preventDefault(); dropZone.classList.remove('drag-over');
-  if (e.dataTransfer.files[0]) selectFile(e.dataTransfer.files[0]);
-});
-videoInput.addEventListener('change', () => { if (videoInput.files[0]) selectFile(videoInput.files[0]); });
+    // ── Populate font dropdown ────────────────────────────────────────────────────
+    const fontSelect = document.getElementById('fontSelect');
+    FONTS.forEach(f => fontSelect.add(new Option(f.label, f.value)));
 
-function selectFile(file) {
-  document.getElementById('dropText').textContent = file.name;
-  const pv = document.getElementById('previewVideo');
-  pv.src = URL.createObjectURL(file);
-  document.getElementById('videoPreview').classList.remove('hidden');
-  const btn = document.getElementById('transcribeBtn');
-  btn.disabled = false;
-  btn._file = file;
-}
+    // ── Upload / drag-drop ────────────────────────────────────────────────────────
+    const dropZone = document.getElementById('dropZone');
+    const videoInput = document.getElementById('videoInput');
 
-// ── Transcribe ────────────────────────────────────────────────────────────────
-document.getElementById('transcribeBtn').addEventListener('click', async () => {
-  const btn   = document.getElementById('transcribeBtn');
-  const file  = btn._file;
-  if (!file) return;
+    dropZone.addEventListener('click', () => videoInput.click());
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault(); dropZone.classList.remove('drag-over');
+      if (e.dataTransfer.files[0]) selectFile(e.dataTransfer.files[0]);
+    });
+    videoInput.addEventListener('change', () => { if (videoInput.files[0]) selectFile(videoInput.files[0]); });
 
-  const model = document.getElementById('modelSelect').value;
-  const fd    = new FormData();
-  fd.append('video', file);
-  fd.append('model', model);
+    function selectFile(file) {
+      document.getElementById('dropText').textContent = file.name;
+      const pv = document.getElementById('previewVideo');
+      pv.src = URL.createObjectURL(file);
+      document.getElementById('videoPreview').classList.remove('hidden');
+      const btn = document.getElementById('transcribeBtn');
+      btn.disabled = false;
+      btn._file = file;
+    }
 
-  btn.disabled = true;
-  showProgress(true, 'Uploading…');
-  startProgressAnim();
+    // ── Transcribe ────────────────────────────────────────────────────────────────
+    document.getElementById('transcribeBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('transcribeBtn');
+      const file = btn._file;
+      if (!file) return;
 
-  try {
-    const res  = await fetch('/upload', { method: 'POST', body: fd });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    state.filename = data.filename;
-    state.cues     = data.cues;
-    showProgress(false);
-    gotoSection('edit');
-    renderCues();
-  } catch (err) {
-    showProgress(false);
-    btn.disabled = false;
-    alert('Transcription failed: ' + err.message);
-  }
-});
+      const model = document.getElementById('modelSelect').value;
+      state.script = document.getElementById('scriptSelect').value;
+      const fd = new FormData();
+      fd.append('video', file);
+      fd.append('model', model);
+      fd.append('script', state.script);
 
-let _progInt = null;
-function startProgressAnim() {
-  let pct = 5;
-  const fill = document.getElementById('progressFill');
-  document.getElementById('progressLabel').textContent = 'Transcribing with Whisper AI… (this can take a minute)';
-  fill.style.width = '5%';
-  _progInt = setInterval(() => {
-    if (pct < 88) { pct += Math.random() * 2.5; fill.style.width = pct + '%'; }
-  }, 900);
-}
-function showProgress(show, label) {
-  document.getElementById('uploadProgress').classList.toggle('hidden', !show);
-  if (label) document.getElementById('progressLabel').textContent = label;
-  if (!show && _progInt) { clearInterval(_progInt); _progInt = null; }
-}
+      btn.disabled = true;
+      showProgress(true, 'Uploading…');
+      startProgressAnim();
 
-// ── Section nav ───────────────────────────────────────────────────────────────
-const SECTIONS = ['upload','edit','style','burn','download'];
-function gotoSection(name) {
-  SECTIONS.forEach(s => document.getElementById('section-' + s).classList.add('hidden'));
-  document.getElementById('section-' + name).classList.remove('hidden');
-  const stepMap = { upload:1, edit:2, style:3, burn:4, download:4 };
-  updateStepBar(stepMap[name] || 1);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-function updateStepBar(active) {
-  for (let i = 1; i <= 4; i++) {
-    const el = document.getElementById('step-ind-' + i);
-    el.classList.toggle('active', i === active);
-    el.classList.toggle('done',   i < active);
-  }
-}
+      try {
+        const res = await fetch('/upload', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        state.filename = data.filename;
+        state.cues = data.cues;
+        showProgress(false);
+        gotoSection('edit');
+        renderCues();
+      } catch (err) {
+        showProgress(false);
+        btn.disabled = false;
+        alert('Transcription failed: ' + err.message);
+      }
+    });
 
-// ── Cue editor ────────────────────────────────────────────────────────────────
-function fmtTime(s) {
-  s = parseFloat(s) || 0;
-  const h   = Math.floor(s / 3600);
-  const m   = Math.floor((s % 3600) / 60);
-  const sec = Math.floor(s % 60);
-  const cs  = Math.round((s % 1) * 100);
-  return `${h}:${p2(m)}:${p2(sec)}.${p2(cs)}`;
-}
-function parseTime(v) {
-  const parts = String(v).split(':');
-  if (parts.length === 3) return +parts[0] * 3600 + +parts[1] * 60 + +parts[2];
-  return parseFloat(v) || 0;
-}
-function p2(n) { return String(n).padStart(2, '0'); }
+    let _progInt = null;
+    function startProgressAnim() {
+      let pct = 5;
+      const fill = document.getElementById('progressFill');
+      document.getElementById('progressLabel').textContent = 'Transcribing with Whisper AI… (this can take a minute)';
+      fill.style.width = '5%';
+      _progInt = setInterval(() => {
+        if (pct < 88) { pct += Math.random() * 2.5; fill.style.width = pct + '%'; }
+      }, 900);
+    }
+    function showProgress(show, label) {
+      document.getElementById('uploadProgress').classList.toggle('hidden', !show);
+      if (label) document.getElementById('progressLabel').textContent = label;
+      if (!show && _progInt) { clearInterval(_progInt); _progInt = null; }
+    }
 
-function renderCues() {
-  const tbody = document.getElementById('cuesBody');
-  tbody.innerHTML = '';
-  state.cues.forEach((cue, i) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
+    // ── Section nav ───────────────────────────────────────────────────────────────
+    const SECTIONS = ['upload', 'edit', 'style', 'burn', 'download'];
+    function gotoSection(name) {
+      SECTIONS.forEach(s => document.getElementById('section-' + s).classList.add('hidden'));
+      document.getElementById('section-' + name).classList.remove('hidden');
+      const stepMap = { upload: 1, edit: 2, style: 3, burn: 4, download: 4 };
+      updateStepBar(stepMap[name] || 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    function updateStepBar(active) {
+      for (let i = 1; i <= 4; i++) {
+        const el = document.getElementById('step-ind-' + i);
+        el.classList.toggle('active', i === active);
+        el.classList.toggle('done', i < active);
+      }
+    }
+
+    // ── Cue editor ────────────────────────────────────────────────────────────────
+    function fmtTime(s) {
+      s = parseFloat(s) || 0;
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const sec = Math.floor(s % 60);
+      const cs = Math.round((s % 1) * 100);
+      return `${h}:${p2(m)}:${p2(sec)}.${p2(cs)}`;
+    }
+    function parseTime(v) {
+      const parts = String(v).split(':');
+      if (parts.length === 3) return +parts[0] * 3600 + +parts[1] * 60 + +parts[2];
+      return parseFloat(v) || 0;
+    }
+    function p2(n) { return String(n).padStart(2, '0'); }
+
+    function renderCues() {
+      const tbody = document.getElementById('cuesBody');
+      tbody.innerHTML = '';
+      state.cues.forEach((cue, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
       <td>${i + 1}</td>
       <td><input class="time-input" value="${fmtTime(cue.start)}" onchange="state.cues[${i}].start=parseTime(this.value)"></td>
       <td><input class="time-input" value="${fmtTime(cue.end)}"   onchange="state.cues[${i}].end=parseTime(this.value)"></td>
       <td><input class="text-input" value="${esc(cue.text)}"      onchange="state.cues[${i}].text=this.value"></td>
       <td><button class="del-btn" onclick="deleteCue(${i})">✕</button></td>`;
-    tbody.appendChild(tr);
-  });
-}
-function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
-function deleteCue(i) { state.cues.splice(i, 1); renderCues(); }
-function addCue() {
-  const last = state.cues[state.cues.length - 1];
-  const s    = last ? +last.end + 0.1 : 0;
-  state.cues.push({ start: s, end: s + 2, text: 'New subtitle' });
-  renderCues();
-  document.getElementById('cuesBody').lastElementChild?.scrollIntoView({ behavior: 'smooth' });
-}
+        tbody.appendChild(tr);
+      });
+    }
+    function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+    function deleteCue(i) { state.cues.splice(i, 1); renderCues(); }
+    function addCue() {
+      const last = state.cues[state.cues.length - 1];
+      const s = last ? +last.end + 0.1 : 0;
+      state.cues.push({ start: s, end: s + 2, text: 'New subtitle' });
+      renderCues();
+      document.getElementById('cuesBody').lastElementChild?.scrollIntoView({ behavior: 'smooth' });
+    }
 
-function toggleWBW() {
-  state.wordByWord = !state.wordByWord;
-  document.getElementById('wbwToggle').classList.toggle('active', state.wordByWord);
-  document.getElementById('wbwBadge').classList.toggle('hidden', !state.wordByWord);
-  document.getElementById('wbwHint').textContent = state.wordByWord
-    ? '⚡ Word-by-Word ON — each word will appear individually in the output video.'
-    : 'Click any cell to edit. Toggle Word-by-Word for the one-word-at-a-time reel effect.';
-}
+    function setWPS(n) {
+      state.wordsPerScreen = n;
+      document.querySelectorAll('.wps-btn').forEach(b => {
+        b.classList.toggle('active', +b.dataset.n === n);
+      });
+      // clear custom input if a preset was clicked
+      if ([0, 1, 2, 3].includes(n)) document.getElementById('wpsCustom').value = '';
+      const hint = document.getElementById('wpsHint');
+      hint.textContent = n === 0
+        ? 'Click any cell to edit. Use Words/screen to show N words at a time in the output.'
+        : `Words/screen = ${n}  — each ${n === 1 ? 'word' : n + ' words'} will appear at a time in the output video.`;
+    }
 
-function gotoStyle() { gotoSection('style'); updatePreview(); }
+    function gotoStyle() { gotoSection('style'); updatePreview(); }
 
-// ── Style controls ────────────────────────────────────────────────────────────
-function onFontSize() {
-  const v = document.getElementById('fontSizeSlider').value;
-  document.getElementById('fontSizeVal').textContent = v;
-  state.style.fontSize = +v; updatePreview();
-}
-function onOutlineSize() {
-  const v = document.getElementById('outlineSizeSlider').value;
-  document.getElementById('outlineSizeVal').textContent = v;
-  state.style.outlineSize = +v; updatePreview();
-}
-function toggleBold() {
-  state.style.bold = !state.style.bold;
-  document.getElementById('boldBtn').classList.toggle('active', state.style.bold);
-  updatePreview();
-}
-function toggleItalic() {
-  state.style.italic = !state.style.italic;
-  document.getElementById('italicBtn').classList.toggle('active', state.style.italic);
-  updatePreview();
-}
-function setPosition(pos) {
-  state.style.position = pos;
-  document.querySelectorAll('.pos-btn').forEach(b => b.classList.toggle('active', b.dataset.pos === pos));
-  updatePreview();
-}
+    // ── Style controls ────────────────────────────────────────────────────────────
+    function onFontSize() {
+      const v = document.getElementById('fontSizeSlider').value;
+      document.getElementById('fontSizeVal').textContent = v;
+      state.style.fontSize = +v; updatePreview();
+    }
+    function onOutlineSize() {
+      const v = document.getElementById('outlineSizeSlider').value;
+      document.getElementById('outlineSizeVal').textContent = v;
+      state.style.outlineSize = +v; updatePreview();
+    }
+    function toggleBold() {
+      state.style.bold = !state.style.bold;
+      document.getElementById('boldBtn').classList.toggle('active', state.style.bold);
+      updatePreview();
+    }
+    function toggleItalic() {
+      state.style.italic = !state.style.italic;
+      document.getElementById('italicBtn').classList.toggle('active', state.style.italic);
+      updatePreview();
+    }
+    function setPosition(pos) {
+      state.style.position = pos;
+      document.querySelectorAll('.pos-btn').forEach(b => b.classList.toggle('active', b.dataset.pos === pos));
+      updatePreview();
+    }
 
-function updatePreview() {
-  state.style.fontName    = document.getElementById('fontSelect').value;
-  state.style.fontColor   = document.getElementById('fontColor').value;
-  state.style.outlineColor= document.getElementById('outlineColor').value;
+    function updatePreview() {
+      state.style.fontName = document.getElementById('fontSelect').value;
+      state.style.fontColor = document.getElementById('fontColor').value;
+      state.style.outlineColor = document.getElementById('outlineColor').value;
 
-  const el     = document.getElementById('previewText');
-  const screen = document.getElementById('previewScreen');
-  const posMap = { bottom: '85%', middle: '50%', top: '12%' };
+      const el = document.getElementById('previewText');
+      const screen = document.getElementById('previewScreen');
+      const posMap = { bottom: '85%', middle: '50%', top: '12%' };
 
-  el.style.cssText = [
-    `font-family: "${state.style.fontName}", sans-serif`,
-    `font-size: ${state.style.fontSize}px`,
-    `color: ${state.style.fontColor}`,
-    `font-weight: ${state.style.bold   ? '700' : '400'}`,
-    `font-style:  ${state.style.italic ? 'italic' : 'normal'}`,
-    `top: ${posMap[state.style.position] || '85%'}`,
-    `-webkit-text-stroke: ${state.style.outlineSize}px ${state.style.outlineColor}`,
-    `text-shadow: ${state.style.outlineSize}px ${state.style.outlineSize}px 0 ${state.style.outlineColor}`,
-    'left: 50%', 'transform: translate(-50%,-50%)',
-    'position: absolute', 'white-space: nowrap', 'pointer-events: none'
-  ].join(';');
-}
+      el.style.cssText = [
+        `font-family: "${state.style.fontName}", sans-serif`,
+        `font-size: ${state.style.fontSize}px`,
+        `color: ${state.style.fontColor}`,
+        `font-weight: ${state.style.bold ? '700' : '400'}`,
+        `font-style:  ${state.style.italic ? 'italic' : 'normal'}`,
+        `top: ${posMap[state.style.position] || '85%'}`,
+        `-webkit-text-stroke: ${state.style.outlineSize}px ${state.style.outlineColor}`,
+        `text-shadow: ${state.style.outlineSize}px ${state.style.outlineSize}px 0 ${state.style.outlineColor}`,
+        'left: 50%', 'transform: translate(-50%,-50%)',
+        'position: absolute', 'white-space: nowrap', 'pointer-events: none'
+      ].join(';');
+    }
 
-// ── Mode selection ────────────────────────────────────────────────────────────
-function selectMode(m) {
-  state.mode = m;
-  document.getElementById('mode-hardcoded').classList.toggle('active', m === 'hardcoded');
-  document.getElementById('mode-softcoded').classList.toggle('active', m === 'softcoded');
-  document.getElementById('softcodeNote').classList.toggle('hidden', m !== 'softcoded');
-}
-function gotoBurn() { gotoSection('burn'); }
+    // ── Mode selection ────────────────────────────────────────────────────────────
+    function selectMode(m) {
+      state.mode = m;
+      document.getElementById('mode-hardcoded').classList.toggle('active', m === 'hardcoded');
+      document.getElementById('mode-softcoded').classList.toggle('active', m === 'softcoded');
+      document.getElementById('softcodeNote').classList.toggle('hidden', m !== 'softcoded');
+    }
+    function gotoBurn() { gotoSection('burn'); }
 
-// ── Burn ──────────────────────────────────────────────────────────────────────
-async function burnVideo() {
-  document.getElementById('burnBtn').disabled = true;
-  document.getElementById('burnProgress').classList.remove('hidden');
+    // ── Burn ──────────────────────────────────────────────────────────────────────
+    async function burnVideo() {
+      document.getElementById('burnBtn').disabled = true;
+      document.getElementById('burnProgress').classList.remove('hidden');
 
-  const payload = {
-    filename  : state.filename,
-    cues      : state.cues,
-    style     : state.style,
-    mode      : state.mode,
-    wordByWord: state.wordByWord
-  };
+      const payload = {
+        filename: state.filename,
+        cues: state.cues,
+        style: state.style,
+        mode: state.mode,
+        wordsPerScreen: state.wordsPerScreen
+      };
 
-  try {
-    const res  = await fetch('/burn', {
-      method : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body   : JSON.stringify(payload)
-    });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
+      try {
+        const res = await fetch('/burn', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
 
-    document.getElementById('downloadLink').href = '/download/' + data.output;
-    document.getElementById('downloadLink').setAttribute('download', data.output);
-    gotoSection('download');
-  } catch (err) {
-    document.getElementById('burnProgress').classList.add('hidden');
-    document.getElementById('burnBtn').disabled = false;
-    alert('Burn failed: ' + err.message);
-  }
-}
+        document.getElementById('downloadLink').href = '/download/' + data.output;
+        document.getElementById('downloadLink').setAttribute('download', data.output);
+        gotoSection('download');
+      } catch (err) {
+        document.getElementById('burnProgress').classList.add('hidden');
+        document.getElementById('burnBtn').disabled = false;
+        alert('Burn failed: ' + err.message);
+      }
+    }
 
-// ── Reset ─────────────────────────────────────────────────────────────────────
-function resetApp() {
-  state.filename = null; state.cues = []; state.wordByWord = false; state.mode = 'hardcoded';
-  document.getElementById('videoInput').value = '';
-  document.getElementById('dropText').textContent = 'Drop video here';
-  document.getElementById('videoPreview').classList.add('hidden');
-  document.getElementById('transcribeBtn').disabled = true;
-  document.getElementById('burnProgress').classList.add('hidden');
-  document.getElementById('burnBtn').disabled = false;
-  selectMode('hardcoded');
-  gotoSection('upload');
-}
-</script>
+    // ── Reset ─────────────────────────────────────────────────────────────────────
+    function resetApp() {
+      state.filename = null; state.cues = []; state.wordsPerScreen = 0;
+      state.script = 'original'; state.mode = 'hardcoded';
+      document.getElementById('videoInput').value = '';
+      document.getElementById('dropText').textContent = 'Drop video here';
+      document.getElementById('videoPreview').classList.add('hidden');
+      document.getElementById('transcribeBtn').disabled = true;
+      document.getElementById('burnProgress').classList.add('hidden');
+      document.getElementById('burnBtn').disabled = false;
+      document.getElementById('scriptSelect').value = 'original';
+      setWPS(0);
+      selectMode('hardcoded');
+      gotoSection('upload');
+    }
+  </script>
 </body>
+
 </html>

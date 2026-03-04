@@ -5,6 +5,17 @@ from pathlib import Path
 from flask import Flask, render_template, request, jsonify, send_from_directory
 import whisper
 
+# ── Transliteration helper ────────────────────────────────────────────────────
+
+def transliterate_to_roman(text):
+    """Convert Devanagari Hindi text to Roman (IAST-like) script."""
+    try:
+        from indic_transliteration import sanscript
+        from indic_transliteration.sanscript import transliterate
+        return transliterate(text, sanscript.DEVANAGARI, sanscript.ITRANS)
+    except Exception:
+        return text  # fallback: return original if library fails
+
 app = Flask(__name__)
 
 BASE_DIR = Path(__file__).parent
@@ -127,20 +138,25 @@ def build_srt(cues):
         parts.append(f"{i}\n{_srt_time(cue['start'])} --> {_srt_time(cue['end'])}\n{cue['text']}\n")
     return '\n'.join(parts)
 
-# ── Word-by-word split ────────────────────────────────────────────────────────
+# ── N-words-per-screen split ─────────────────────────────────────────────────
 
-def split_words(cues):
+def split_n_words(cues, n=1):
+    """Split each cue into chunks of n words, timing distributed proportionally."""
+    n = max(1, int(n))
     result = []
     for cue in cues:
         words = str(cue.get('text', '')).strip().split()
         if not words:
             continue
         start, end = float(cue['start']), float(cue['end'])
-        dur = (end - start) / len(words)
-        for i, w in enumerate(words):
-            result.append({'start': round(start + i * dur, 3),
-                           'end':   round(start + (i + 1) * dur, 3),
-                           'text':  w})
+        chunks = [words[i:i + n] for i in range(0, len(words), n)]
+        chunk_dur = (end - start) / len(chunks)
+        for i, chunk in enumerate(chunks):
+            result.append({
+                'start': round(start + i * chunk_dur, 3),
+                'end':   round(start + (i + 1) * chunk_dur, 3),
+                'text':  ' '.join(chunk)
+            })
     return result
 
 # ── FFmpeg path escaping (Windows) ────────────────────────────────────────────
@@ -166,6 +182,7 @@ def upload():
 
     video      = request.files['video']
     model_name = request.form.get('model', 'turbo')
+    script     = request.form.get('script', 'original')  # 'original' or 'roman'
     ext        = Path(video.filename).suffix.lower() or '.mp4'
     uid        = str(uuid.uuid4())
     filepath   = UPLOAD_DIR / (uid + ext)
@@ -174,10 +191,14 @@ def upload():
     try:
         model  = whisper.load_model(model_name)
         result = model.transcribe(str(filepath), verbose=False)
-        cues   = [{'start': round(s['start'], 3),
-                   'end':   round(s['end'],   3),
-                   'text':  s['text'].strip()}
-                  for s in result['segments']]
+        cues   = []
+        for s in result['segments']:
+            text = s['text'].strip()
+            if script == 'roman':
+                text = transliterate_to_roman(text)
+            cues.append({'start': round(s['start'], 3),
+                         'end':   round(s['end'],   3),
+                         'text':  text})
         return jsonify({'cues': cues, 'filename': filepath.name})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -185,12 +206,12 @@ def upload():
 
 @app.route('/burn', methods=['POST'])
 def burn():
-    data       = request.get_json(force=True)
-    filename   = data.get('filename')
-    cues       = data.get('cues', [])
-    style      = data.get('style', {})
-    mode       = data.get('mode', 'hardcoded')
-    word_mode  = data.get('wordByWord', False)
+    data            = request.get_json(force=True)
+    filename        = data.get('filename')
+    cues            = data.get('cues', [])
+    style           = data.get('style', {})
+    mode            = data.get('mode', 'hardcoded')
+    words_per_screen = int(data.get('wordsPerScreen', 0))  # 0 = disabled
 
     if not filename or not cues:
         return jsonify({'error': 'Missing filename or cues'}), 400
@@ -199,8 +220,8 @@ def burn():
     if not input_path.exists():
         return jsonify({'error': 'Source video not found on server'}), 404
 
-    if word_mode:
-        cues = split_words(cues)
+    if words_per_screen > 0:
+        cues = split_n_words(cues, words_per_screen)
 
     uid         = str(uuid.uuid4())
     out_name    = f"output_{uid}.mp4"

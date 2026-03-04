@@ -11,6 +11,7 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 
 <body>
@@ -22,6 +23,23 @@
     </div>
     <p class="logo-tagline">AI-powered local subtitle generator • Free • No cloud needed</p>
   </header>
+
+  <!-- Floating phone button -->
+  <button class="phone-fab" id="phoneFab" onclick="openPhoneModal()" title="Open on any device">&#x1F4F1;</button>
+
+  <!-- Phone modal -->
+  <div class="modal-overlay hidden" id="phoneModal" onclick="closePhoneModal(event)">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closePhoneModal()">&times;</button>
+      <h3>&#x1F4F1; Open on Any Device</h3>
+      <p class="modal-hint">Make sure your device is on the <strong>same WiFi</strong> as this PC, then scan the QR code
+        or type the URL in any browser.</p>
+      <div id="qrcode" class="qr-box"></div>
+      <div class="modal-url" id="modalUrl">Loading&hellip;</div>
+      <p class="modal-note">&#x2139; Keep the laptop's terminal open. The laptop must stay on while you use the app on
+        any device.</p>
+    </div>
+  </div>
 
   <main>
     <!-- Step indicator -->
@@ -501,6 +519,31 @@
       setWPS(0);
       selectMode('hardcoded');
       gotoSection('upload');
+    }
+    // ── Phone modal ─────────────────────────────────────────────────────────────────
+    let _qrGenerated = false;
+
+    async function openPhoneModal() {
+      document.getElementById('phoneModal').classList.remove('hidden');
+      if (_qrGenerated) return;
+      try {
+        const res = await fetch('/network-info');
+        const data = await res.json();
+        document.getElementById('modalUrl').textContent = data.url;
+        new QRCode(document.getElementById('qrcode'), {
+          text: data.url, width: 200, height: 200,
+          colorDark: '#ffffff', colorLight: '#1a1f2e'
+        });
+        _qrGenerated = true;
+      } catch (e) {
+        document.getElementById('modalUrl').textContent = 'Could not detect IP. Check console.';
+      }
+    }
+
+    function closePhoneModal(e) {
+      if (!e || e.target.id === 'phoneModal') {
+        document.getElementById('phoneModal').classList.add('hidden');
+      }
     }
   </script>
 </body>

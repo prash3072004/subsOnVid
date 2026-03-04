@@ -1,11 +1,24 @@
 import os
 import uuid
+import socket
 import subprocess
 from pathlib import Path
 from flask import Flask, render_template, request, jsonify, send_from_directory
 import whisper
 
 # ── Transliteration helper ────────────────────────────────────────────────────
+
+def get_local_ip():
+    """Return the machine's LAN IP address (e.g. 192.168.x.x)."""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return '127.0.0.1'
+
 
 def transliterate_to_roman(text):
     """Convert Devanagari Hindi text to Roman (IAST-like) script."""
@@ -261,16 +274,23 @@ def burn():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/network-info')
+def network_info():
+    ip = get_local_ip()
+    return jsonify({'ip': ip, 'port': 5001, 'url': f'http://{ip}:5001'})
+
+
 @app.route('/download/<path:filename>')
 def download(filename):
     return send_from_directory(str(OUTPUT_DIR), filename, as_attachment=True)
 
 
 if __name__ == '__main__':
+    local_ip = get_local_ip()
     print("\n  SubsOnVid -- Video Subtitle Generator")
     print("=" * 42)
     print(f"   Custom fonts found : {sum(1 for f in AVAILABLE_FONTS if f['custom'])}")
-    print(f"   System fonts       : {sum(1 for f in AVAILABLE_FONTS if not f['custom'])}")
-    print("   Server running at  : http://127.0.0.1:5000")
+    print(f"   Local (this PC)    : http://127.0.0.1:5001")
+    print(f"   On your iPhone     : http://{local_ip}:5001")
     print("   Press Ctrl+C to stop\n")
-    app.run(debug=False, port=5001)
+    app.run(host='0.0.0.0', debug=False, port=5001)

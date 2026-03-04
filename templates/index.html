@@ -545,6 +545,8 @@
 
         document.getElementById('downloadLink').href = '/download/' + data.output;
         document.getElementById('downloadLink').setAttribute('download', data.output);
+        document.getElementById('burnProgress').classList.add('hidden');
+        document.getElementById('burnBtn').disabled = false;
         gotoSection('download');
       } catch (err) {
         document.getElementById('burnProgress').classList.add('hidden');

@@ -225,6 +225,7 @@ def burn():
     style           = data.get('style', {})
     mode            = data.get('mode', 'hardcoded')
     words_per_screen = int(data.get('wordsPerScreen', 0))  # 0 = disabled
+    sync_offset_ms   = float(data.get('syncOffset', 0))    # milliseconds
 
     if not filename or not cues:
         return jsonify({'error': 'Missing filename or cues'}), 400
@@ -235,6 +236,14 @@ def burn():
 
     if words_per_screen > 0:
         cues = split_n_words(cues, words_per_screen)
+
+    # Apply sync offset (convert ms → seconds, clamp start to >= 0)
+    if sync_offset_ms != 0:
+        offset_s = sync_offset_ms / 1000.0
+        cues = [{'start': max(0.0, round(c['start'] + offset_s, 3)),
+                 'end':   max(0.0, round(c['end']   + offset_s, 3)),
+                 'text':  c['text']} for c in cues]
+
 
     uid         = str(uuid.uuid4())
     out_name    = f"output_{uid}.mp4"

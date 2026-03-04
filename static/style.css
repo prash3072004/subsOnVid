@@ -1063,3 +1063,16 @@ select option {
 .copy-btn:hover {
   opacity: .85;
 }
+
+/* ── Download action buttons ─────────────────────────────────────────────── */
+.download-actions {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  margin-top: .6rem;
+}
+
+.download-actions .btn-ghost {
+  width: 100%;
+  justify-content: center;
+}

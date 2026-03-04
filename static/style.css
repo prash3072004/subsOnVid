@@ -978,3 +978,88 @@ select option {
     font-size: 1.2rem;
   }
 }
+
+/* ── Transcript panel ────────────────────────────────────────────────────── */
+.transcript-panel {
+  margin: .6rem 0;
+}
+
+.transcript-toggle {
+  width: 100%;
+  text-align: left;
+  background: rgba(255, 255, 255, .05);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: .65rem 1rem;
+  font-size: .88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .2s;
+}
+
+.transcript-toggle:hover {
+  background: rgba(255, 255, 255, .09);
+}
+
+.transcript-body {
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  padding: 1.1rem;
+  background: rgba(255, 255, 255, .02);
+}
+
+.transcript-label {
+  display: block;
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: .4rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.transcript-label .muted {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.transcript-textarea {
+  width: 100%;
+  min-height: 130px;
+  resize: vertical;
+  background: rgba(255, 255, 255, .05);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: 'Courier New', monospace;
+  font-size: .83rem;
+  line-height: 1.6;
+  padding: .6rem .8rem;
+}
+
+.transcript-textarea:focus {
+  outline: none;
+  border-color: var(--accent1);
+}
+
+.copy-btn {
+  position: absolute;
+  top: .5rem;
+  right: .5rem;
+  background: var(--accent-g);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-size: .76rem;
+  font-weight: 700;
+  padding: .3rem .7rem;
+  cursor: pointer;
+  transition: opacity .2s;
+}
+
+.copy-btn:hover {
+  opacity: .85;
+}

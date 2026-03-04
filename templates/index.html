@@ -136,7 +136,37 @@
       </div>
 
       <button class="btn-ghost" onclick="addCue()">+ Add Cue</button>
+
+      <!-- Transcript panel -->
+      <div class="transcript-panel">
+        <button class="transcript-toggle" onclick="toggleTranscript()" id="transcriptToggleBtn">
+          &#x1F4CB; Full Transcript &amp; Reinject <span id="transcriptArrow">▼</span>
+        </button>
+        <div class="transcript-body hidden" id="transcriptBody">
+          <p class="hint" style="margin-bottom:.7rem">
+            Copy the transcript, paste it into ChatGPT to edit, then paste the result back below and click
+            <strong>Reinject</strong>.
+            Keep one line per subtitle cue — the timestamps will be preserved.
+          </p>
+
+          <!-- Copy area -->
+          <label class="transcript-label">Current Transcript <span class="muted">(one line = one cue)</span></label>
+          <div style="position:relative">
+            <textarea id="transcriptOut" class="transcript-textarea" readonly></textarea>
+            <button class="copy-btn" onclick="copyTranscript()" id="copyBtn">Copy</button>
+          </div>
+
+          <!-- Paste-back area -->
+          <label class="transcript-label" style="margin-top:1rem">Paste Edited Text Here</label>
+          <textarea id="transcriptIn" class="transcript-textarea"
+            placeholder="Paste your edited transcript here (keep the same number of lines for best results)…"></textarea>
+          <button class="btn-primary" style="margin-top:.6rem" onclick="reinjectTranscript()">&#x21A9;&#xFE0F; Reinject
+            into Cues</button>
+        </div>
+      </div>
+
       <button class="btn-primary" onclick="gotoStyle()">Next: Style →</button>
+
     </section>
 
     <!-- ── STEP 3 : Style ──────────────────────────────────────────────────── -->
@@ -545,7 +575,65 @@
         document.getElementById('phoneModal').classList.add('hidden');
       }
     }
+    // ── Transcript panel ───────────────────────────────────────────────────────
+    function toggleTranscript() {
+      const body = document.getElementById('transcriptBody');
+      const arrow = document.getElementById('transcriptArrow');
+      const open = body.classList.toggle('hidden');
+      arrow.textContent = open ? '▼' : '▲';
+      if (!open) refreshTranscriptOut();  // populate when opening
+    }
+
+    function refreshTranscriptOut() {
+      document.getElementById('transcriptOut').value =
+        state.cues.map(c => c.text).join('\n');
+    }
+
+    async function copyTranscript() {
+      const text = document.getElementById('transcriptOut').value;
+      try {
+        await navigator.clipboard.writeText(text);
+        const btn = document.getElementById('copyBtn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+      } catch (e) {
+        document.getElementById('transcriptOut').select();
+        document.execCommand('copy');
+      }
+    }
+
+    function reinjectTranscript() {
+      const raw = document.getElementById('transcriptIn').value.trim();
+      if (!raw) { alert('Paste your edited transcript first.'); return; }
+
+      const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      const n = state.cues.length;
+
+      if (lines.length === n) {
+        // Perfect 1-to-1 match — just replace text, keep all timestamps
+        lines.forEach((line, i) => { state.cues[i].text = line; });
+      } else {
+        // Different line count — distribute lines proportionally across cue timestamps
+        const totalStart = state.cues[0].start;
+        const totalEnd = state.cues[n - 1].end;
+        const step = (totalEnd - totalStart) / lines.length;
+        state.cues = lines.map((line, i) => ({
+          start: round3(totalStart + i * step),
+          end: round3(totalStart + (i + 1) * step),
+          text: line
+        }));
+      }
+
+      renderCues();
+      refreshTranscriptOut();
+      document.getElementById('transcriptIn').value = '';
+      alert(`Reinjected ${lines.length} line(s) into ${state.cues.length} cue(s). Review the cue table above.`);
+    }
+
+    function round3(n) { return Math.round(n * 1000) / 1000; }
+
   </script>
+
 </body>
 
 </html>

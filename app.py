@@ -107,6 +107,24 @@ def build_ass(cues, style):
     italic       = -1 if style.get('italic', False) else 0
     align        = {'bottom': 2, 'middle': 5, 'top': 8}.get(style.get('position','bottom'), 2)
 
+    bg_enabled   = style.get('bgEnabled', False)
+    if bg_enabled:
+        # User opacity is 0-100 (100 is solid). ASS alpha is 0-255 (0 is solid, 255 is transparent)
+        opacity = int(style.get('bgOpacity', 60))
+        ass_alpha = int((100 - opacity) / 100.0 * 255)
+        
+        # For BorderStyle=3 (Opaque Box):
+        # OutlineColour becomes the box color. Outline becomes the box padding.
+        outline_col  = _ass_color(style.get('bgColor', '#000000'), alpha=ass_alpha)
+        outline_sz   = 15.0  # 15px padding for the box
+        border_style = 3
+        shadow       = 0
+        bg_color     = "&H00000000" # Unused for the box itself, but required for the slot
+    else:
+        border_style = 1
+        shadow       = 0
+        bg_color     = "&H00000000"
+
     header = (
         "[Script Info]\n"
         "ScriptType: v4.00+\n"
@@ -120,8 +138,11 @@ def build_ass(cues, style):
         "ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
         "Alignment, MarginL, MarginR, MarginV, Encoding\n"
         f"Style: Default,{font_name},{font_size},{font_color},&H000000FF,"
-        f"{outline_col},&H00000000,{bold},{italic},0,0,100,100,0,0,1,"
-        f"{outline_sz},0,{align},10,10,30,1\n\n"
+        # Position 6 is OutlineColour (controls box color when BorderStyle=3)
+        # Position 16 is BorderStyle
+        # Position 17 is Outline (controls box padding when BorderStyle=3)
+        f"{outline_col},{bg_color},{bold},{italic},0,0,100,100,0,0,"
+        f"{border_style},{outline_sz},{shadow},{align},10,10,30,1\n\n"
         "[Events]\n"
         "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
     )

@@ -201,6 +201,22 @@
         </div>
 
         <div class="style-group">
+          <label>Background Box</label>
+          <div style="display:flex;align-items:center;gap:.75rem;">
+            <label class="toggle-switch" title="Enable a solid colour box behind the subtitle text">
+              <input type="checkbox" id="bgEnabled" onchange="updatePreview()">
+              <span class="toggle-slider"></span>
+            </label>
+            <input type="color" id="bgColor" value="#000000" oninput="updatePreview()" title="Box colour">
+          </div>
+          <div style="margin-top:8px; display:flex; align-items:center;">
+            <label style="margin:0; width:50px;">Opac: <span id="bgOpacityVal">60</span>%</label>
+            <input type="range" id="bgOpacity" min="0" max="100" value="60" oninput="updatePreview()"
+              style="flex:1; margin-left:10px;">
+          </div>
+        </div>
+
+        <div class="style-group">
           <label>Bold / Italic</label>
           <div class="format-btns">
             <button class="fmt-btn" id="boldBtn" onclick="toggleBold()"><b>B</b></button>
@@ -492,10 +508,27 @@
       state.style.fontName = document.getElementById('fontSelect').value;
       state.style.fontColor = document.getElementById('fontColor').value;
       state.style.outlineColor = document.getElementById('outlineColor').value;
+      state.style.bgEnabled = document.getElementById('bgEnabled').checked;
+      state.style.bgColor = document.getElementById('bgColor').value;
+      state.style.bgOpacity = parseInt(document.getElementById('bgOpacity').value || 60);
+
+      const opacLabel = document.getElementById('bgOpacityVal');
+      if (opacLabel) opacLabel.textContent = state.style.bgOpacity;
 
       const el = document.getElementById('previewText');
       const screen = document.getElementById('previewScreen');
       const posMap = { bottom: '85%', middle: '50%', top: '12%' };
+
+      // Convert hex color + opacity(0-100) to rgba for the live preview
+      const hex = state.style.bgColor.replace('#', '');
+      const r = parseInt(hex.substring(0, 2), 16);
+      const g = parseInt(hex.substring(2, 4), 16);
+      const b = parseInt(hex.substring(4, 6), 16);
+      const a = state.style.bgOpacity / 100;
+
+      const bgCss = state.style.bgEnabled
+        ? `background:rgba(${r},${g},${b},${a});padding:3px 14px;border-radius:3px`
+        : `background:transparent;padding:0`;
 
       el.style.cssText = [
         `font-family: "${state.style.fontName}", sans-serif`,
@@ -507,6 +540,7 @@
         `-webkit-text-stroke: ${state.style.outlineSize}px ${state.style.outlineColor}`,
         `text-shadow: ${state.style.outlineSize}px ${state.style.outlineSize}px 0 ${state.style.outlineColor}`,
         'left: 50%', 'transform: translate(-50%,-50%)',
+        bgCss,
         'position: absolute', 'white-space: nowrap', 'pointer-events: none'
       ].join(';');
     }

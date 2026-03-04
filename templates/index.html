@@ -224,6 +224,19 @@
           </div>
         </div>
 
+        <div class="style-group">
+          <label>Word Highlight</label>
+          <div style="display:flex;align-items:center;gap:.75rem;">
+            <label class="toggle-switch" title="Highlight the current spoken word">
+              <input type="checkbox" id="highlightEnabled" onchange="updatePreview()">
+              <span class="toggle-slider"></span>
+            </label>
+            <input type="color" id="highlightColor" value="#ffff00" oninput="updatePreview()" title="Highlight colour">
+          </div>
+          <p class="hint-inline" style="font-size:0.75rem; margin-top:6px;">Highlights active word in any words/screen
+            setting.</p>
+        </div>
+
         <div class="style-group" style="grid-column:1/-1">
           <label>Subtitle Position</label>
           <div class="position-btns">
@@ -511,6 +524,12 @@
       state.style.bgEnabled = document.getElementById('bgEnabled').checked;
       state.style.bgColor = document.getElementById('bgColor').value;
       state.style.bgOpacity = parseInt(document.getElementById('bgOpacity').value || 60);
+
+      const h_el = document.getElementById('highlightEnabled');
+      if (h_el) state.style.highlightEnabled = h_el.checked;
+
+      const hc_el = document.getElementById('highlightColor');
+      if (hc_el) state.style.highlightColor = hc_el.value;
 
       const opacLabel = document.getElementById('bgOpacityVal');
       if (opacLabel) opacLabel.textContent = state.style.bgOpacity;

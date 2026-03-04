@@ -174,23 +174,58 @@ def build_srt(cues):
 
 # ── N-words-per-screen split ─────────────────────────────────────────────────
 
-def split_n_words(cues, n=1):
-    """Split each cue into chunks of n words, timing distributed proportionally."""
-    n = max(1, int(n))
+def split_n_words(cues, n=1, highlight_color=None):
+    """
+    Split each cue into chunks of n words. 
+    If `highlight_color` is provided (e.g. '&H00FFFF&'), instead of just returning 
+    the n words, it returns the n words repeated n times, with each iteration 
+    highlighting the i-th active word.
+    If n=0, it processes the whole sentence as a single chunk.
+    """
+    if n > 0:
+        n = max(1, int(n))
     result = []
+    
     for cue in cues:
         words = str(cue.get('text', '')).strip().split()
         if not words:
             continue
         start, end = float(cue['start']), float(cue['end'])
-        chunks = [words[i:i + n] for i in range(0, len(words), n)]
+        
+        # If n=0, the chunk is the entire sentence.
+        if n == 0:
+            chunks = [words]
+        else:
+            chunks = [words[i:i + n] for i in range(0, len(words), n)]
+            
         chunk_dur = (end - start) / len(chunks)
-        for i, chunk in enumerate(chunks):
-            result.append({
-                'start': round(start + i * chunk_dur, 3),
-                'end':   round(start + (i + 1) * chunk_dur, 3),
-                'text':  ' '.join(chunk)
-            })
+        
+        for chunk_idx, chunk in enumerate(chunks):
+            chunk_start = start + chunk_idx * chunk_dur
+            chunk_end = start + (chunk_idx + 1) * chunk_dur
+            
+            if highlight_color:
+                # Distribute chunk_dur among the words IN this chunk
+                word_dur = (chunk_end - chunk_start) / len(chunk)
+                for i in range(len(chunk)):
+                    highlighted_chunk = []
+                    for j, w in enumerate(chunk):
+                        if j == i:
+                            highlighted_chunk.append(f"{{\\c{highlight_color}}}{w}{{\\c}}")
+                        else:
+                            highlighted_chunk.append(w)
+                    
+                    result.append({
+                        'start': round(chunk_start + i * word_dur, 3),
+                        'end':   round(chunk_start + (i + 1) * word_dur, 3),
+                        'text':  ' '.join(highlighted_chunk)
+                    })
+            else:
+                result.append({
+                    'start': round(chunk_start, 3),
+                    'end':   round(chunk_end, 3),
+                    'text':  ' '.join(chunk)
+                })
     return result
 
 # ── FFmpeg path escaping (Windows) ────────────────────────────────────────────
@@ -247,6 +282,9 @@ def burn():
     mode            = data.get('mode', 'hardcoded')
     words_per_screen = int(data.get('wordsPerScreen', 0))  # 0 = disabled
     sync_offset_ms   = float(data.get('syncOffset', 0))    # milliseconds
+    
+    highlight_enabled = style.get('highlightEnabled', False)
+    highlight_color   = style.get('highlightColor', '#FFFF00')
 
     if not filename or not cues:
         return jsonify({'error': 'Missing filename or cues'}), 400
@@ -255,8 +293,11 @@ def burn():
     if not input_path.exists():
         return jsonify({'error': 'Source video not found on server'}), 404
 
-    if words_per_screen > 0:
-        cues = split_n_words(cues, words_per_screen)
+    # Apply chunking and optional ASS highlighting
+    hc = _ass_color(highlight_color) if highlight_enabled else None
+    
+    if words_per_screen > 0 or highlight_enabled:
+        cues = split_n_words(cues, words_per_screen, highlight_color=hc)
 
     # Apply sync offset (convert ms → seconds, clamp start to >= 0)
     if sync_offset_ms != 0:
